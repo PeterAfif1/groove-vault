@@ -6,6 +6,7 @@
   "scripts": {
     "start": "tsx src/index.ts",
     "dev": "tsx watch src/index.ts",
+    "db:setup": "psql $DATABASE_URL -f src/db/schema.sql",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
