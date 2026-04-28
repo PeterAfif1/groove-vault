@@ -1,21 +1,5 @@
 import { useEffect, useState } from 'react';
-
-interface Rudiment {
-  id: number;
-  name: string;
-  sticking: string;
-  target_bpm: number;
-  current_bpm: number | null;
-  previous_bpm: number | null;
-  category: string;
-}
-
-interface PracticeLog {
-  id: number;
-  rudiment_id: number;
-  date: string;
-  current_bpm: number;
-}
+import type { Rudiment, PracticeLog } from '../types/api';
 
 const RudimentCard = ({ rudiment, onSessionLogged, onDeleted }: { rudiment: Rudiment; onSessionLogged?: () => void; onDeleted?: (id: number) => void }) => {
   const [currentBpm, setCurrentBpm] = useState<number | ''>('');
