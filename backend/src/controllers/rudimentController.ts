@@ -115,16 +115,50 @@ export const getPracticeHistory = async (req: Request, res: Response) => {
 
 /**
  * GET /api/rudiments/stats
- * Calculates high-level practice statistics.
+ * Calculates high-level practice statistics including current streak.
+ * Streak uses a gap-and-island approach: DATE - ROW_NUMBER() produces the same
+ * value for consecutive days, so each island is a contiguous run.
  */
 export const getStats = async (req: Request, res: Response) => {
   try {
     const query = `
-      SELECT 
-        COUNT(*) as total_sessions,
-        ROUND(AVG(current_bpm)) as average_bpm,
-        COUNT(DISTINCT rudiment_id) as active_rudiments
-      FROM practice_logs
+      WITH practice_stats AS (
+        SELECT
+          COUNT(*) AS total_sessions,
+          COALESCE(ROUND(AVG(current_bpm)), 0) AS average_bpm,
+          COUNT(DISTINCT rudiment_id) AS active_rudiments
+        FROM practice_logs
+      ),
+      distinct_days AS (
+        SELECT DISTINCT DATE(date) AS practice_day
+        FROM practice_logs
+      ),
+      numbered_days AS (
+        SELECT
+          practice_day,
+          practice_day - ROW_NUMBER() OVER (ORDER BY practice_day)::INTEGER AS grp
+        FROM distinct_days
+      ),
+      streak_groups AS (
+        SELECT grp, COUNT(*) AS streak_len, MAX(practice_day) AS last_day
+        FROM numbered_days
+        GROUP BY grp
+      )
+      SELECT
+        ps.total_sessions,
+        ps.average_bpm,
+        ps.active_rudiments,
+        COALESCE(
+          (
+            SELECT streak_len
+            FROM streak_groups
+            WHERE last_day >= CURRENT_DATE - INTERVAL '1 day'
+            ORDER BY last_day DESC
+            LIMIT 1
+          ),
+          0
+        ) AS streak_days
+      FROM practice_stats ps
     `;
     const result = await pool.query(query);
     res.json(result.rows[0]);

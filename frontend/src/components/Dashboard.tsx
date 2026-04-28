@@ -1,6 +1,21 @@
 import { useEffect, useState } from 'react';
 import type { Rudiment, PracticeLog } from '../types/api';
 
+interface DashboardStats {
+  total_sessions: string;
+  average_bpm: string;
+  active_rudiments: string;
+  streak_days: string;
+}
+
+function getRank(totalSessions: number): string {
+  if (totalSessions === 0) return 'BEGINNER';
+  if (totalSessions <= 10) return 'DEVELOPING';
+  if (totalSessions <= 30) return 'INTERMEDIATE';
+  if (totalSessions <= 75) return 'ADVANCED';
+  return 'MASTER';
+}
+
 const RudimentCard = ({ rudiment, onSessionLogged, onDeleted }: { rudiment: Rudiment; onSessionLogged?: () => void; onDeleted?: (id: number) => void }) => {
   const [currentBpm, setCurrentBpm] = useState<number | ''>('');
   const [isLogging, setIsLogging] = useState(false);
@@ -168,6 +183,7 @@ const RudimentCard = ({ rudiment, onSessionLogged, onDeleted }: { rudiment: Rudi
 const Dashboard = ({ onSessionLogged }: { onSessionLogged?: () => void }) => {
   const [rudiments, setRudiments] = useState<Rudiment[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [stats, setStats] = useState<DashboardStats | null>(null);
   const [filter, setFilter] = useState('ALL');
 
   const categories = ['ALL', 'FUNK', 'JAZZ', 'ROCK', 'TECHNIQUE', 'METAL'];
@@ -187,6 +203,21 @@ const Dashboard = ({ onSessionLogged }: { onSessionLogged?: () => void }) => {
     fetchRudiments();
   }, []);
 
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const response = await fetch('/api/rudiments/stats');
+        if (response.ok) {
+          const data = await response.json();
+          setStats(data);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    fetchStats();
+  }, []);
+
   const handleDeleteRudiment = (id: number) => {
     setRudiments(prev => prev.filter(r => r.id !== id));
   };
@@ -203,10 +234,10 @@ const Dashboard = ({ onSessionLogged }: { onSessionLogged?: () => void }) => {
         <div>
           <div className="flex items-center gap-4 mb-4">
             <span className="bg-cyan-500/10 text-cyan-500 text-[9px] font-black uppercase tracking-[0.3em] px-4 py-1.5 rounded-full border border-cyan-500/20 shadow-[0_0_15px_rgba(6,182,212,0.1)]">
-              5 DAY STREAK
+              {stats ? `${stats.streak_days} DAY STREAK` : '0 DAY STREAK'}
             </span>
             <span className="text-slate-800 text-[10px] font-black uppercase tracking-widest">•</span>
-            <span className="text-slate-600 text-[9px] font-black uppercase tracking-[0.3em]">RANK: MASTER LEVEL 4</span>
+            <span className="text-slate-600 text-[9px] font-black uppercase tracking-[0.3em]">RANK: {stats ? getRank(Number(stats.total_sessions)) : 'BEGINNER'}</span>
           </div>
           <h1 className="text-6xl font-black text-slate-100 tracking-tighter uppercase italic leading-none">WELCOME BACK,<br/>DRUMMER</h1>
         </div>
