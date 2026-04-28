@@ -17,9 +17,10 @@ interface PracticeLog {
   current_bpm: number;
 }
 
-const RudimentCard = ({ rudiment, onSessionLogged }: { rudiment: Rudiment; onSessionLogged?: () => void }) => {
+const RudimentCard = ({ rudiment, onSessionLogged, onDeleted }: { rudiment: Rudiment; onSessionLogged?: () => void; onDeleted?: (id: number) => void }) => {
   const [currentBpm, setCurrentBpm] = useState<number | ''>('');
   const [isLogging, setIsLogging] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [showSaved, setShowSaved] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [history, setHistory] = useState<PracticeLog[]>([]);
@@ -49,12 +50,26 @@ const RudimentCard = ({ rudiment, onSessionLogged }: { rudiment: Rudiment; onSes
     }
   };
 
+  const handleDelete = async () => {
+    setIsDeleting(true);
+    try {
+      const response = await fetch(`/api/rudiments/${rudiment.id}`, { method: 'DELETE' });
+      if (response.ok) {
+        onDeleted?.(rudiment.id);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   const fetchHistory = async () => {
     try {
       const response = await fetch(`/api/rudiments/${rudiment.id}/logs`);
       if (response.ok) {
         const data = await response.json();
-        setHistory(data.slice(0, 3));
+        setHistory(data);
         setHistoryLoaded(true);
       }
     } catch (err) {
@@ -76,6 +91,16 @@ const RudimentCard = ({ rudiment, onSessionLogged }: { rudiment: Rudiment; onSes
           <h2 className="text-xl font-black text-slate-100 tracking-tight group-hover:text-cyan-400 transition-colors duration-300 uppercase">{rudiment.name}</h2>
           <p className="text-[10px] font-mono text-slate-500 mt-2 tracking-[0.2em] bg-slate-950/50 px-3 py-1 rounded-full inline-block uppercase font-bold">{rudiment.sticking}</p>
         </div>
+        <button
+          onClick={handleDelete}
+          disabled={isDeleting}
+          aria-label="Delete rudiment"
+          className="text-slate-700 hover:text-red-500 hover:bg-red-500/10 transition-all p-1.5 rounded-lg disabled:opacity-40"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/>
+          </svg>
+        </button>
       </div>
 
       <div className="flex flex-col gap-6 mt-4">
@@ -178,7 +203,11 @@ const Dashboard = ({ onSessionLogged }: { onSessionLogged?: () => void }) => {
     fetchRudiments();
   }, []);
 
-  const filteredRudiments = filter === 'ALL' 
+  const handleDeleteRudiment = (id: number) => {
+    setRudiments(prev => prev.filter(r => r.id !== id));
+  };
+
+  const filteredRudiments = filter === 'ALL'
     ? rudiments 
     : rudiments.filter(r => (r.category || '').toUpperCase() === filter);
 
@@ -217,7 +246,7 @@ const Dashboard = ({ onSessionLogged }: { onSessionLogged?: () => void }) => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-10">
         {filteredRudiments.map((rudiment) => (
-          <RudimentCard key={rudiment.id} rudiment={rudiment} onSessionLogged={onSessionLogged} />
+          <RudimentCard key={rudiment.id} rudiment={rudiment} onSessionLogged={onSessionLogged} onDeleted={handleDeleteRudiment} />
         ))}
       </div>
     </div>

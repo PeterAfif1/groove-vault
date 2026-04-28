@@ -55,6 +55,25 @@ export const createRudiment = async (req: Request, res: Response) => {
 };
 
 /**
+ * DELETE /api/rudiments/:id
+ * Deletes a rudiment and its associated practice logs (via CASCADE).
+ */
+export const deleteRudiment = async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  try {
+    const result = await pool.query('DELETE FROM rudiments WHERE id = $1 RETURNING *', [id]);
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: 'Rudiment not found' });
+    }
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('Error deleting rudiment:', err instanceof Error ? err.message : String(err));
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+/**
  * POST /api/rudiments/:id/logs
  * Creates a practice log for a specific rudiment.
  */
@@ -85,7 +104,7 @@ export const getPracticeHistory = async (req: Request, res: Response) => {
   const { id } = req.params;
 
   try {
-    const query = 'SELECT * FROM practice_logs WHERE rudiment_id = $1 ORDER BY date DESC';
+    const query = 'SELECT * FROM practice_logs WHERE rudiment_id = $1 ORDER BY date DESC LIMIT 3';
     const result = await pool.query(query, [id]);
     res.json(result.rows);
   } catch (err) {

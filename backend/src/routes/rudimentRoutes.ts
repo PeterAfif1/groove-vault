@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getAllRudiments, createRudiment, createPracticeLog, getPracticeHistory, getStats } from '../controllers/rudimentController';
+import { getAllRudiments, createRudiment, deleteRudiment, createPracticeLog, getPracticeHistory, getStats } from '../controllers/rudimentController';
 
 const router = Router();
 
@@ -9,6 +9,11 @@ router.get('/', getAllRudiments);
 // POST /api/rudiments
 router.post('/', createRudiment);
 
+// DELETE /api/rudiments/:id
+router.delete('/:id', deleteRudiment);
+
+// /stats must be registered before any /:id GET routes — Express matches same-method
+// routes in order, so GET /stats would be swallowed by GET /:id if it came first.
 // GET /api/rudiments/stats
 router.get('/stats', getStats);
 
