@@ -27,7 +27,7 @@ function App() {
                 <>
                   <AddRudimentForm onRudimentAdded={handleRudimentAdded} />
                   <div className="p-8">
-                    <Dashboard key={refreshKey} />
+                    <Dashboard key={refreshKey} onSessionLogged={handleRudimentAdded} />
                   </div>
                 </>
               }

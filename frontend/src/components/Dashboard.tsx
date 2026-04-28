@@ -17,12 +17,13 @@ interface PracticeLog {
   current_bpm: number;
 }
 
-const RudimentCard = ({ rudiment }: { rudiment: Rudiment }) => {
+const RudimentCard = ({ rudiment, onSessionLogged }: { rudiment: Rudiment; onSessionLogged?: () => void }) => {
   const [currentBpm, setCurrentBpm] = useState<number | ''>('');
   const [isLogging, setIsLogging] = useState(false);
   const [showSaved, setShowSaved] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [history, setHistory] = useState<PracticeLog[]>([]);
+  const [historyLoaded, setHistoryLoaded] = useState(false);
 
   const handleLogSession = async () => {
     if (!currentBpm) return;
@@ -38,7 +39,7 @@ const RudimentCard = ({ rudiment }: { rudiment: Rudiment }) => {
         setCurrentBpm('');
         setTimeout(() => {
           setShowSaved(false);
-          window.location.reload();
+          onSessionLogged?.();
         }, 1500);
       }
     } catch (err) {
@@ -54,6 +55,7 @@ const RudimentCard = ({ rudiment }: { rudiment: Rudiment }) => {
       if (response.ok) {
         const data = await response.json();
         setHistory(data.slice(0, 3));
+        setHistoryLoaded(true);
       }
     } catch (err) {
       console.error(err);
@@ -131,7 +133,7 @@ const RudimentCard = ({ rudiment }: { rudiment: Rudiment }) => {
 
         <button
           onClick={() => {
-            if (!showHistory) fetchHistory();
+            if (!showHistory && !historyLoaded) fetchHistory();
             setShowHistory(!showHistory);
           }}
           className="text-[9px] uppercase tracking-[0.4em] font-black text-slate-700 hover:text-cyan-500 transition-colors py-2"
@@ -154,7 +156,7 @@ const RudimentCard = ({ rudiment }: { rudiment: Rudiment }) => {
   );
 };
 
-const Dashboard = () => {
+const Dashboard = ({ onSessionLogged }: { onSessionLogged?: () => void }) => {
   const [rudiments, setRudiments] = useState<Rudiment[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [filter, setFilter] = useState('ALL');
@@ -215,7 +217,7 @@ const Dashboard = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-10">
         {filteredRudiments.map((rudiment) => (
-          <RudimentCard key={rudiment.id} rudiment={rudiment} />
+          <RudimentCard key={rudiment.id} rudiment={rudiment} onSessionLogged={onSessionLogged} />
         ))}
       </div>
     </div>
