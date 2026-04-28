@@ -26,8 +26,8 @@ export const getAllRudiments = async (req: Request, res: Response) => {
     `;
     const result = await pool.query(query);
     res.json(result.rows);
-  } catch (err: any) {
-    console.error('Error fetching rudiments:', err.message);
+  } catch (err) {
+    console.error('Error fetching rudiments:', err instanceof Error ? err.message : String(err));
     res.status(500).json({ error: 'Internal server error' });
   }
 };
@@ -48,8 +48,8 @@ export const createRudiment = async (req: Request, res: Response) => {
     const values = [name, sticking, target_bpm];
     const result = await pool.query(query, values);
     res.status(201).json(result.rows[0]);
-  } catch (err: any) {
-    console.error('Error creating rudiment:', err.message);
+  } catch (err) {
+    console.error('Error creating rudiment:', err instanceof Error ? err.message : String(err));
     res.status(500).json({ error: 'Internal server error' });
   }
 };
@@ -62,7 +62,7 @@ export const createPracticeLog = async (req: Request, res: Response) => {
   const { id } = req.params; // rudiment_id from URL
   const { current_bpm, notes } = req.body;
 
-  if (!current_bpm) {
+  if (current_bpm == null) {
     return res.status(400).json({ error: 'Missing required field: current_bpm' });
   }
 
@@ -71,8 +71,8 @@ export const createPracticeLog = async (req: Request, res: Response) => {
     const values = [id, current_bpm, notes];
     const result = await pool.query(query, values);
     res.status(201).json(result.rows[0]);
-  } catch (err: any) {
-    console.error('Error creating practice log:', err.message);
+  } catch (err) {
+    console.error('Error creating practice log:', err instanceof Error ? err.message : String(err));
     res.status(500).json({ error: 'Internal server error' });
   }
 };
@@ -88,18 +88,18 @@ export const getPracticeHistory = async (req: Request, res: Response) => {
     const query = 'SELECT * FROM practice_logs WHERE rudiment_id = $1 ORDER BY date DESC';
     const result = await pool.query(query, [id]);
     res.json(result.rows);
-    } catch (err: any) {
-    console.error('Error fetching practice history:', err.message);
+  } catch (err) {
+    console.error('Error fetching practice history:', err instanceof Error ? err.message : String(err));
     res.status(500).json({ error: 'Internal server error' });
-    }
-    };
+  }
+};
 
-    /**
-    * GET /api/rudiments/stats
-    * Calculates high-level practice statistics.
-    */
-    export const getStats = async (req: Request, res: Response) => {
-    try {
+/**
+ * GET /api/rudiments/stats
+ * Calculates high-level practice statistics.
+ */
+export const getStats = async (req: Request, res: Response) => {
+  try {
     const query = `
       SELECT 
         COUNT(*) as total_sessions,
@@ -109,8 +109,8 @@ export const getPracticeHistory = async (req: Request, res: Response) => {
     `;
     const result = await pool.query(query);
     res.json(result.rows[0]);
-    } catch (err: any) {
-    console.error('Error fetching stats:', err.message);
+  } catch (err) {
+    console.error('Error fetching stats:', err instanceof Error ? err.message : String(err));
     res.status(500).json({ error: 'Internal server error' });
-    }
-    };
+  }
+};

@@ -1,7 +1,6 @@
-import React from 'react';
 import { NavLink } from 'react-router-dom';
 
-const Sidebar: React.FC = () => {
+const Sidebar = () => {
   const menuItems = [
     { name: 'RUDIMENTS', path: '/' },
     { name: 'METRONOME', path: '/metronome' },
