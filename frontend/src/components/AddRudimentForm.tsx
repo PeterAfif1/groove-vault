@@ -1,13 +1,16 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 interface AddRudimentFormProps {
   onRudimentAdded?: () => void;
 }
 
-const AddRudimentForm: React.FC<AddRudimentFormProps> = ({ onRudimentAdded }) => {
+const CATEGORIES = ['Uncategorized', 'Funk', 'Jazz', 'Rock', 'Technique', 'Metal'];
+
+const AddRudimentForm = ({ onRudimentAdded }: AddRudimentFormProps) => {
   const [name, setName] = useState('');
   const [sticking, setSticking] = useState('');
   const [targetBpm, setTargetBpm] = useState<number | ''>('');
+  const [category, setCategory] = useState('Uncategorized');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isError, setIsError] = useState(false);
 
@@ -21,13 +24,14 @@ const AddRudimentForm: React.FC<AddRudimentFormProps> = ({ onRudimentAdded }) =>
       const response = await fetch('/api/rudiments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, sticking, target_bpm: Number(targetBpm) }),
+        body: JSON.stringify({ name, sticking, target_bpm: Number(targetBpm), category }),
       });
 
       if (response.ok) {
         setName('');
         setSticking('');
         setTargetBpm('');
+        setCategory('Uncategorized');
         if (onRudimentAdded) onRudimentAdded();
       } else {
         setIsError(true);
@@ -55,7 +59,7 @@ const AddRudimentForm: React.FC<AddRudimentFormProps> = ({ onRudimentAdded }) =>
             placeholder="PARADIDDLE..."
           />
         </div>
-        
+
         <div className="flex-[0.7] w-full">
           <label className="block text-[9px] uppercase tracking-[0.4em] text-slate-700 mb-1.5 ml-1 font-black">PATTERN</label>
           <input
@@ -65,6 +69,21 @@ const AddRudimentForm: React.FC<AddRudimentFormProps> = ({ onRudimentAdded }) =>
             className="w-full bg-slate-950 border border-slate-900 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-1 focus:ring-purple-500/50 focus:border-purple-500 text-slate-100 placeholder-slate-900 transition-all font-bold text-xs"
             placeholder="RLRR LRLL"
           />
+        </div>
+
+        <div className="w-full md:w-36">
+          <label className="block text-[9px] uppercase tracking-[0.4em] text-slate-700 mb-1.5 ml-1 font-black">CATEGORY</label>
+          <select
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            className="w-full bg-slate-950 border border-slate-900 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-1 focus:ring-purple-500/50 focus:border-purple-500 text-slate-100 transition-all font-bold text-xs appearance-none cursor-pointer"
+          >
+            {CATEGORIES.map((cat) => (
+              <option key={cat} value={cat} className="bg-slate-900">
+                {cat.toUpperCase()}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div className="w-full md:w-32">
@@ -80,7 +99,7 @@ const AddRudimentForm: React.FC<AddRudimentFormProps> = ({ onRudimentAdded }) =>
 
         <button
           type="submit"
-          disabled={isSubmitting || !name}
+          disabled={isSubmitting || !name || !sticking || !targetBpm}
           className={`w-full md:w-auto px-10 h-[42px] font-black uppercase text-[10px] tracking-[0.3em] rounded-xl transition-all active:scale-95 ${
             isError
               ? 'bg-red-600 text-white shadow-[0_0_20px_rgba(220,38,38,0.3)]'
