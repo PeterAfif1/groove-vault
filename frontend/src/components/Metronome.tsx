@@ -111,6 +111,8 @@ const Metronome = () => {
      ---------------------------------------------------------- */
   const audioCtxRef = useRef<AudioContext | null>(null);
   const timerRef = useRef<number | null>(null);        // lookahead setInterval id
+  const rafRef = useRef<number | null>(null);          // requestAnimationFrame id
+  const scheduledNotesRef = useRef<{ time: number; beatIndex: number; subIndex: number }[]>([]);
   const nextNoteTimeRef = useRef(0);                   // when the next note is due (AudioContext time)
   const currentBeatRef = useRef(0);                    // scheduler's beat counter
   const currentSubRef = useRef(0);                     // scheduler's subdivision counter
@@ -143,14 +145,7 @@ const Metronome = () => {
     if (!ctx) return;
 
     playClick(ctx, time, isAccent, isSubBeat);
-
-    // Update visual state — schedule it close to when the sound plays
-    // Using setTimeout aligned to the audio clock for visual sync
-    const delay = Math.max(0, (time - ctx.currentTime) * 1000);
-    setTimeout(() => {
-      setCurrentBeat(beatIndex);
-      setCurrentSub(subIndex);
-    }, delay);
+    scheduledNotesRef.current.push({ time, beatIndex, subIndex });
   }, []);
 
   const advanceNote = useCallback(() => {
@@ -170,6 +165,20 @@ const Metronome = () => {
 
     // Advance the clock
     nextNoteTimeRef.current += secondsPerSub;
+  }, []);
+
+  const drawFrame = useCallback(() => {
+    const ctx = audioCtxRef.current;
+    if (ctx) {
+      const now = ctx.currentTime;
+      const queue = scheduledNotesRef.current;
+      while (queue.length > 0 && queue[0].time <= now) {
+        const note = queue.shift()!;
+        setCurrentBeat(note.beatIndex);
+        setCurrentSub(note.subIndex);
+      }
+    }
+    rafRef.current = requestAnimationFrame(drawFrame);
   }, []);
 
   const schedulerTick = useCallback(() => {
@@ -199,20 +208,27 @@ const Metronome = () => {
     currentBeatRef.current = 0;
     currentSubRef.current = 0;
     nextNoteTimeRef.current = audioCtxRef.current.currentTime;
+    scheduledNotesRef.current = [];
 
     isPlayingRef.current = true;
     setIsPlaying(true);
 
-    // Start the lookahead scheduler
+    // Start the lookahead scheduler and visual rAF loop
     timerRef.current = window.setInterval(schedulerTick, LOOKAHEAD_INTERVAL);
     schedulerTick();
-  }, [schedulerTick]);
+    rafRef.current = requestAnimationFrame(drawFrame);
+  }, [schedulerTick, drawFrame]);
 
   const stop = useCallback(() => {
     if (timerRef.current !== null) {
       clearInterval(timerRef.current);
       timerRef.current = null;
     }
+    if (rafRef.current !== null) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+    }
+    scheduledNotesRef.current = [];
     isPlayingRef.current = false;
     setIsPlaying(false);
     setCurrentBeat(-1);
@@ -231,6 +247,7 @@ const Metronome = () => {
   useEffect(() => {
     return () => {
       if (timerRef.current !== null) clearInterval(timerRef.current);
+      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
       if (audioCtxRef.current) audioCtxRef.current.close();
     };
   }, []);
