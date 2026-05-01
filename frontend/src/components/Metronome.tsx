@@ -85,6 +85,7 @@ function playClick(
 
   // Very short click: ramp gain to zero over 30ms for a sharp percussive sound
   osc.start(time);
+  gain.gain.setValueAtTime(gain.gain.value, time);
   gain.gain.exponentialRampToValueAtTime(0.001, time + 0.03);
   osc.stop(time + 0.03);
 }
@@ -204,6 +205,7 @@ const Metronome = () => {
 
     // Start the lookahead scheduler
     timerRef.current = window.setInterval(schedulerTick, LOOKAHEAD_INTERVAL);
+    schedulerTick();
   }, [schedulerTick]);
 
   const stop = useCallback(() => {
