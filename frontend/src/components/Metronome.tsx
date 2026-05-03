@@ -7,13 +7,6 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 type TimeSignature = '4/4' | '3/4' | '6/8' | '5/4';
 type Subdivision = 1 | 2 | 3 | 4; // quarter, 8th, triplet, 16th
 
-interface ScheduledNote {
-  time: number;
-  beatIndex: number;    // which beat in the measure (0-based)
-  subIndex: number;     // which subdivision within the beat (0-based)
-  isAccent: boolean;    // true for beat 1
-}
-
 /* ============================================================
    CONSTANTS
    ============================================================ */
