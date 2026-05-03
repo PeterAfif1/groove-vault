@@ -105,6 +105,7 @@ const Metronome = () => {
   const audioCtxRef = useRef<AudioContext | null>(null);
   const timerRef = useRef<number | null>(null);        // lookahead setInterval id
   const rafRef = useRef<number | null>(null);          // requestAnimationFrame id
+  const drawFrameRef = useRef<() => void>(() => {});   // stable ref to drawFrame for rAF loop
   const scheduledNotesRef = useRef<{ time: number; beatIndex: number; subIndex: number }[]>([]);
   const nextNoteTimeRef = useRef(0);                   // when the next note is due (AudioContext time)
   const currentBeatRef = useRef(0);                    // scheduler's beat counter
@@ -171,8 +172,9 @@ const Metronome = () => {
         setCurrentSub(note.subIndex);
       }
     }
-    rafRef.current = requestAnimationFrame(drawFrame);
+    rafRef.current = requestAnimationFrame(drawFrameRef.current);
   }, []);
+  drawFrameRef.current = drawFrame;
 
   const schedulerTick = useCallback(() => {
     const ctx = audioCtxRef.current;
