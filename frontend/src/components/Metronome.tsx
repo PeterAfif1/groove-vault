@@ -170,6 +170,10 @@ const Metronome = () => {
         const note = queue.shift()!;
         setCurrentBeat(note.beatIndex);
         setCurrentSub(note.subIndex);
+        setTimeout(() => {
+          setCurrentBeat(-1);
+          setCurrentSub(-1);
+        }, 80);
       }
     }
     rafRef.current = requestAnimationFrame(drawFrameRef.current);
