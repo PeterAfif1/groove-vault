@@ -174,7 +174,10 @@ const Metronome = () => {
     }
     rafRef.current = requestAnimationFrame(drawFrameRef.current);
   }, []);
-  drawFrameRef.current = drawFrame;
+
+  useEffect(() => {
+    drawFrameRef.current = drawFrame;
+  }, [drawFrame]);
 
   const schedulerTick = useCallback(() => {
     const ctx = audioCtxRef.current;
