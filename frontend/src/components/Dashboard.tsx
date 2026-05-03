@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { API_BASE } from '../config';
 
 interface Rudiment {
   id: number;
@@ -28,7 +29,7 @@ const RudimentCard = ({ rudiment }: { rudiment: Rudiment }) => {
     if (!currentBpm) return;
     setIsLogging(true);
     try {
-      const response = await fetch(`/api/rudiments/${rudiment.id}/logs`, {
+      const response = await fetch(`${API_BASE}/api/rudiments/${rudiment.id}/logs`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ current_bpm: Number(currentBpm) }),
@@ -50,7 +51,7 @@ const RudimentCard = ({ rudiment }: { rudiment: Rudiment }) => {
 
   const fetchHistory = async () => {
     try {
-      const response = await fetch(`/api/rudiments/${rudiment.id}/logs`);
+      const response = await fetch(`${API_BASE}/api/rudiments/${rudiment.id}/logs`);
       if (response.ok) {
         const data = await response.json();
         setHistory(data.slice(0, 3));
@@ -164,7 +165,7 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchRudiments = async () => {
       try {
-        const response = await fetch('/api/rudiments');
+        const response = await fetch(`${API_BASE}/api/rudiments`);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const data = await response.json();
         setRudiments(data);

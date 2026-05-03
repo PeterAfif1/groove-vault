@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { API_BASE } from '../config';
 
 interface AddRudimentFormProps {
   onRudimentAdded?: () => void;
@@ -18,7 +19,7 @@ const AddRudimentForm: React.FC<AddRudimentFormProps> = ({ onRudimentAdded }) =>
     setIsSubmitting(true);
     setIsError(false);
     try {
-      const response = await fetch('/api/rudiments', {
+      const response = await fetch(`${API_BASE}/api/rudiments`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, sticking, target_bpm: Number(targetBpm) }),
