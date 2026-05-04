@@ -39,7 +39,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
               `w-full flex items-center gap-4 px-4 py-3 rounded-xl transition-all font-bold text-[10px] uppercase tracking-[0.2em] ${
                 isActive
                   ? 'bg-slate-900 text-cyan-500 shadow-xl'
-                  : 'text-slate-600 hover:text-slate-300 hover:bg-slate-900/50'
+                  : 'text-slate-500 hover:text-slate-300 hover:bg-slate-900/50'
               }`
             }
           >
@@ -49,7 +49,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
       </nav>
 
       <div className="mt-auto p-4 bg-slate-900/50 rounded-2xl border border-slate-800">
-        <div className="text-[9px] text-slate-600 uppercase font-black mb-1 tracking-widest">ENGINE STATUS</div>
+        <div className="text-[9px] text-slate-500 uppercase font-black mb-1 tracking-widest">ENGINE STATUS</div>
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-[0_0_10px_rgba(34,197,94,0.4)]"></div>
           <span className="text-[10px] text-slate-300 font-black uppercase tracking-widest">ONLINE</span>

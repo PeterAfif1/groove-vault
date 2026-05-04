@@ -49,32 +49,32 @@ const AddRudimentForm: React.FC<AddRudimentFormProps> = ({ onRudimentAdded, isOp
   const formFields = (isModal: boolean) => (
     <form onSubmit={handleSubmit} className={isModal ? 'flex flex-col gap-4' : 'max-w-7xl mx-auto flex flex-row items-end gap-6'}>
       <div className="flex-1 w-full">
-        <label className="block text-[9px] uppercase tracking-[0.4em] text-slate-700 mb-1.5 ml-1 font-black">EXERCISE NAME</label>
+        <label className="block text-[9px] uppercase tracking-[0.4em] text-slate-500 mb-1.5 ml-1 font-black">EXERCISE NAME</label>
         <input
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="w-full bg-slate-950 border border-slate-900 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-1 focus:ring-purple-500/50 focus:border-purple-500 text-slate-100 placeholder-slate-900 transition-all font-bold text-xs"
+          className="w-full bg-slate-950 border border-slate-900 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-1 focus:ring-purple-500/50 focus:border-purple-500 text-slate-100 placeholder-slate-600 transition-all font-bold text-xs"
           placeholder="PARADIDDLE..."
         />
       </div>
       <div className="flex-[0.7] w-full">
-        <label className="block text-[9px] uppercase tracking-[0.4em] text-slate-700 mb-1.5 ml-1 font-black">PATTERN</label>
+        <label className="block text-[9px] uppercase tracking-[0.4em] text-slate-500 mb-1.5 ml-1 font-black">PATTERN</label>
         <input
           type="text"
           value={sticking}
           onChange={(e) => setSticking(e.target.value)}
-          className="w-full bg-slate-950 border border-slate-900 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-1 focus:ring-purple-500/50 focus:border-purple-500 text-slate-100 placeholder-slate-900 transition-all font-bold text-xs"
+          className="w-full bg-slate-950 border border-slate-900 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-1 focus:ring-purple-500/50 focus:border-purple-500 text-slate-100 placeholder-slate-600 transition-all font-bold text-xs"
           placeholder="RLRR LRLL"
         />
       </div>
       <div className="w-full md:w-32">
-        <label className="block text-[9px] uppercase tracking-[0.4em] text-slate-700 mb-1.5 ml-1 font-black">GOAL BPM</label>
+        <label className="block text-[9px] uppercase tracking-[0.4em] text-slate-500 mb-1.5 ml-1 font-black">GOAL BPM</label>
         <input
           type="number"
           value={targetBpm}
           onChange={(e) => setTargetBpm(e.target.value === '' ? '' : Number(e.target.value))}
-          className="w-full bg-slate-950 border border-slate-900 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-1 focus:ring-purple-500/50 focus:border-purple-500 text-slate-100 placeholder-slate-900 transition-all font-mono font-black text-center"
+          className="w-full bg-slate-950 border border-slate-900 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-1 focus:ring-purple-500/50 focus:border-purple-500 text-slate-100 placeholder-slate-600 transition-all font-mono font-black text-center"
           placeholder="000"
         />
       </div>
@@ -98,7 +98,7 @@ const AddRudimentForm: React.FC<AddRudimentFormProps> = ({ onRudimentAdded, isOp
         <div className="fixed inset-0 z-40 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/70" onClick={onClose} />
           <div className="relative z-50 w-[90%] max-w-sm bg-slate-950 border border-slate-800 rounded-2xl p-6 shadow-2xl">
-            <div className="text-[9px] uppercase tracking-[0.4em] text-slate-600 font-black mb-4">ADD RUDIMENT</div>
+            <div className="text-[9px] uppercase tracking-[0.4em] text-slate-500 font-black mb-4">ADD RUDIMENT</div>
             {formFields(true)}
           </div>
         </div>

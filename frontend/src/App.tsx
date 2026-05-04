@@ -81,7 +81,7 @@ function App() {
               path="/analytics"
               element={
                 <div className="p-8 flex items-center justify-center h-full">
-                  <p className="text-slate-600 font-black uppercase tracking-[0.4em] text-xs">ANALYTICS COMING SOON</p>
+                  <p className="text-slate-500 font-black uppercase tracking-[0.4em] text-xs">ANALYTICS COMING SOON</p>
                 </div>
               }
             />
@@ -89,7 +89,7 @@ function App() {
               path="/social"
               element={
                 <div className="p-8 flex items-center justify-center h-full">
-                  <p className="text-slate-600 font-black uppercase tracking-[0.4em] text-xs">SOCIAL COMING SOON</p>
+                  <p className="text-slate-500 font-black uppercase tracking-[0.4em] text-xs">SOCIAL COMING SOON</p>
                 </div>
               }
             />
