@@ -1,7 +1,12 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 
-const Sidebar: React.FC = () => {
+interface SidebarProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const menuItems = [
     { name: 'RUDIMENTS', path: '/' },
     { name: 'METRONOME', path: '/metronome' },
@@ -10,7 +15,12 @@ const Sidebar: React.FC = () => {
   ];
 
   return (
-    <aside className="w-64 bg-slate-950/80 backdrop-blur-xl border-r border-slate-900 h-screen sticky top-0 flex flex-col p-6 overflow-hidden">
+    <aside className={`
+      w-64 bg-slate-950/80 backdrop-blur-xl border-r border-slate-900 h-screen flex flex-col p-6 overflow-hidden
+      fixed z-30 top-0 left-0 transition-transform duration-300
+      ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+      md:sticky md:translate-x-0
+    `}>
       <div className="flex items-center gap-2 mb-12">
         <div className="w-8 h-8 bg-cyan-500 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(6,182,212,0.4)]">
           <span className="font-black text-slate-950 text-xs italic">GV</span>
@@ -24,6 +34,7 @@ const Sidebar: React.FC = () => {
             key={item.name}
             to={item.path}
             end={item.path === '/'}
+            onClick={onClose}
             className={({ isActive }) =>
               `w-full flex items-center gap-4 px-4 py-3 rounded-xl transition-all font-bold text-[10px] uppercase tracking-[0.2em] ${
                 isActive
