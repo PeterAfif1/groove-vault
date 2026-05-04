@@ -9,6 +9,7 @@ import './App.css'
 function App() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [formOpen, setFormOpen] = useState(false);
 
   const handleRudimentAdded = () => {
     setRefreshKey(prev => prev + 1);
@@ -36,6 +37,14 @@ function App() {
           <div className="w-5 h-0.5 bg-slate-300" />
         </button>
 
+        {/* Add button — mobile only, top right */}
+        <button
+          className="fixed top-4 right-4 z-30 md:hidden bg-purple-600 border border-purple-500 rounded-xl w-10 h-10 flex items-center justify-center text-white font-black text-xl shadow-[0_0_20px_rgba(147,51,234,0.3)]"
+          onClick={() => setFormOpen(true)}
+        >
+          +
+        </button>
+
         <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
         <main className="flex-1 overflow-y-auto">
@@ -45,7 +54,11 @@ function App() {
               path="/"
               element={
                 <>
-                  <AddRudimentForm onRudimentAdded={handleRudimentAdded} />
+                  <AddRudimentForm
+                  onRudimentAdded={handleRudimentAdded}
+                  isOpen={formOpen}
+                  onClose={() => setFormOpen(false)}
+                />
                   <div className="p-8">
                     <Dashboard key={refreshKey} />
                   </div>

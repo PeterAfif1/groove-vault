@@ -188,7 +188,7 @@ const Dashboard = () => {
     <div className="max-w-7xl mx-auto space-y-16">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
         <div>
-          <div className="flex items-center gap-4 mb-4">
+          <div className="flex items-center gap-4 mb-4 mt-10 md:mt-0">
             <span className="bg-cyan-500/10 text-cyan-500 text-[9px] font-black uppercase tracking-[0.3em] px-4 py-1.5 rounded-full border border-cyan-500/20 shadow-[0_0_15px_rgba(6,182,212,0.1)]">
               5 DAY STREAK
             </span>
