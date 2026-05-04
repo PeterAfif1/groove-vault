@@ -37,15 +37,15 @@ export const getAllRudiments = async (req: Request, res: Response) => {
  * Creates a new rudiment in the database.
  */
 export const createRudiment = async (req: Request, res: Response) => {
-  const { name, sticking, target_bpm } = req.body;
+  const { name, sticking, target_bpm, category } = req.body;
 
   if (!name || !sticking || !target_bpm) {
     return res.status(400).json({ error: 'Missing required fields: name, sticking, target_bpm' });
   }
 
   try {
-    const query = 'INSERT INTO rudiments (name, sticking, target_bpm) VALUES ($1, $2, $3) RETURNING *';
-    const values = [name, sticking, target_bpm];
+    const query = 'INSERT INTO rudiments (name, sticking, target_bpm, category) VALUES ($1, $2, $3, $4) RETURNING *';
+    const values = [name, sticking, target_bpm, category || 'Uncategorized'];
     const result = await pool.query(query, values);
     res.status(201).json(result.rows[0]);
   } catch (err: any) {
