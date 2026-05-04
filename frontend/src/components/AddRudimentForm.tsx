@@ -94,9 +94,8 @@ const AddRudimentForm: React.FC<AddRudimentFormProps> = ({ onRudimentAdded, isOp
 
   return (
     <>
-      {/* Mobile modal */}
       {isOpen && (
-        <div className="md:hidden fixed inset-0 z-40 flex items-center justify-center">
+        <div className="fixed inset-0 z-40 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/70" onClick={onClose} />
           <div className="relative z-50 w-[90%] max-w-sm bg-slate-950 border border-slate-800 rounded-2xl p-6 shadow-2xl">
             <div className="text-[9px] uppercase tracking-[0.4em] text-slate-600 font-black mb-4">ADD RUDIMENT</div>
@@ -104,11 +103,6 @@ const AddRudimentForm: React.FC<AddRudimentFormProps> = ({ onRudimentAdded, isOp
           </div>
         </div>
       )}
-
-      {/* Desktop sticky bar */}
-      <div className="hidden md:block w-full bg-slate-950/80 backdrop-blur-xl border-b border-slate-900 sticky top-0 z-50 py-4 px-8 mb-4">
-        {formFields(false)}
-      </div>
     </>
   );
 };
