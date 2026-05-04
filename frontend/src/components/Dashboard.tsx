@@ -70,10 +70,10 @@ const RudimentCard = ({ rudiment }: { rudiment: Rudiment }) => {
       <div className="absolute -top-24 -right-24 w-48 h-48 bg-cyan-500/5 rounded-full blur-[80px] group-hover:bg-cyan-500/10 transition-all"></div>
 
       <div className="flex justify-between items-start mb-6">
-        <div>
-          <span className="text-[9px] uppercase tracking-[0.4em] font-black text-slate-600 mb-1 block">{rudiment.category || 'EXERCISE'}</span>
-          <h2 className="text-xl font-black text-slate-100 tracking-tight group-hover:text-cyan-400 transition-colors duration-300 uppercase">{rudiment.name}</h2>
-          <p className="text-[10px] font-mono text-slate-500 mt-2 tracking-[0.2em] bg-slate-950/50 px-3 py-1 rounded-full inline-block uppercase font-bold">{rudiment.sticking}</p>
+        <div className="flex flex-col w-full">
+          <span className="text-[9px] uppercase tracking-[0.4em] font-black text-slate-600 text-center mb-1 block">{rudiment.category || 'EXERCISE'}</span>
+          <h2 className="text-xl font-black text-slate-100 text-center tracking-tight group-hover:text-cyan-400 transition-colors duration-300 uppercase">{rudiment.name}</h2>
+          <p className="text-[28px] font-mono text-slate-500 text-center mt-2 tracking-[0.2em] bg-slate-950/50 px-3 py-1 rounded-full uppercase font-bold">{rudiment.sticking}</p>
         </div>
       </div>
 
