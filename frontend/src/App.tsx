@@ -4,6 +4,7 @@ import Sidebar from './components/Sidebar'
 import Dashboard from './components/Dashboard'
 import AddRudimentForm from './components/AddRudimentForm'
 import Metronome from './components/Metronome'
+import Analytics from './components/Analytics'
 import './App.css'
 
 function App() {
@@ -76,12 +77,12 @@ function App() {
               }
             />
 
-            {/* Placeholder pages */}
+            {/* Analytics page */}
             <Route
               path="/analytics"
               element={
-                <div className="p-8 flex items-center justify-center h-full">
-                  <p className="text-slate-500 font-black uppercase tracking-[0.4em] text-xs">ANALYTICS COMING SOON</p>
+                <div className="p-8">
+                  <Analytics />
                 </div>
               }
             />
