@@ -1,6 +1,7 @@
 import express, { type Request, type Response } from 'express';
 import cors from 'cors';
 import rudimentRoutes from './routes/rudimentRoutes';
+import aiRoutes from './routes/aiRoutes';
 
 const app = express();
 
@@ -8,6 +9,7 @@ app.use(cors());
 app.use(express.json());
 
 app.use('/api/rudiments', rudimentRoutes);
+app.use('/api/ai', aiRoutes);
 
 app.get('/', (req: Request, res: Response) => {
   res.send('Groove Vault Engine is running perfectly.');
