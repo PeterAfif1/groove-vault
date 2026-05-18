@@ -7,13 +7,6 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 type TimeSignature = '4/4' | '3/4' | '6/8' | '5/4';
 type Subdivision = 1 | 2 | 3 | 4; // quarter, 8th, triplet, 16th
 
-interface ScheduledNote {
-  time: number;
-  beatIndex: number;    // which beat in the measure (0-based)
-  subIndex: number;     // which subdivision within the beat (0-based)
-  isAccent: boolean;    // true for beat 1
-}
-
 /* ============================================================
    CONSTANTS
    ============================================================ */
@@ -85,6 +78,7 @@ function playClick(
 
   // Very short click: ramp gain to zero over 30ms for a sharp percussive sound
   osc.start(time);
+  gain.gain.setValueAtTime(gain.gain.value, time);
   gain.gain.exponentialRampToValueAtTime(0.001, time + 0.03);
   osc.stop(time + 0.03);
 }
@@ -110,6 +104,9 @@ const Metronome = () => {
      ---------------------------------------------------------- */
   const audioCtxRef = useRef<AudioContext | null>(null);
   const timerRef = useRef<number | null>(null);        // lookahead setInterval id
+  const rafRef = useRef<number | null>(null);          // requestAnimationFrame id
+  const drawFrameRef = useRef<() => void>(() => {});   // stable ref to drawFrame for rAF loop
+  const scheduledNotesRef = useRef<{ time: number; beatIndex: number; subIndex: number }[]>([]);
   const nextNoteTimeRef = useRef(0);                   // when the next note is due (AudioContext time)
   const currentBeatRef = useRef(0);                    // scheduler's beat counter
   const currentSubRef = useRef(0);                     // scheduler's subdivision counter
@@ -142,14 +139,7 @@ const Metronome = () => {
     if (!ctx) return;
 
     playClick(ctx, time, isAccent, isSubBeat);
-
-    // Update visual state — schedule it close to when the sound plays
-    // Using setTimeout aligned to the audio clock for visual sync
-    const delay = Math.max(0, (time - ctx.currentTime) * 1000);
-    setTimeout(() => {
-      setCurrentBeat(beatIndex);
-      setCurrentSub(subIndex);
-    }, delay);
+    scheduledNotesRef.current.push({ time, beatIndex, subIndex });
   }, []);
 
   const advanceNote = useCallback(() => {
@@ -170,6 +160,28 @@ const Metronome = () => {
     // Advance the clock
     nextNoteTimeRef.current += secondsPerSub;
   }, []);
+
+  const drawFrame = useCallback(() => {
+    const ctx = audioCtxRef.current;
+    if (ctx) {
+      const now = ctx.currentTime;
+      const queue = scheduledNotesRef.current;
+      while (queue.length > 0 && queue[0].time <= now) {
+        const note = queue.shift()!;
+        setCurrentBeat(note.beatIndex);
+        setCurrentSub(note.subIndex);
+        setTimeout(() => {
+          setCurrentBeat(-1);
+          setCurrentSub(-1);
+        }, 80);
+      }
+    }
+    rafRef.current = requestAnimationFrame(drawFrameRef.current);
+  }, []);
+
+  useEffect(() => {
+    drawFrameRef.current = drawFrame;
+  }, [drawFrame]);
 
   const schedulerTick = useCallback(() => {
     const ctx = audioCtxRef.current;
@@ -198,19 +210,27 @@ const Metronome = () => {
     currentBeatRef.current = 0;
     currentSubRef.current = 0;
     nextNoteTimeRef.current = audioCtxRef.current.currentTime;
+    scheduledNotesRef.current = [];
 
     isPlayingRef.current = true;
     setIsPlaying(true);
 
-    // Start the lookahead scheduler
+    // Start the lookahead scheduler and visual rAF loop
     timerRef.current = window.setInterval(schedulerTick, LOOKAHEAD_INTERVAL);
-  }, [schedulerTick]);
+    schedulerTick();
+    rafRef.current = requestAnimationFrame(drawFrame);
+  }, [schedulerTick, drawFrame]);
 
   const stop = useCallback(() => {
     if (timerRef.current !== null) {
       clearInterval(timerRef.current);
       timerRef.current = null;
     }
+    if (rafRef.current !== null) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+    }
+    scheduledNotesRef.current = [];
     isPlayingRef.current = false;
     setIsPlaying(false);
     setCurrentBeat(-1);
@@ -229,6 +249,7 @@ const Metronome = () => {
   useEffect(() => {
     return () => {
       if (timerRef.current !== null) clearInterval(timerRef.current);
+      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
       if (audioCtxRef.current) audioCtxRef.current.close();
     };
   }, []);
@@ -310,7 +331,7 @@ const Metronome = () => {
             max={MAX_BPM}
             className="bg-transparent text-8xl font-black font-mono text-cyan-400 tracking-tighter text-center w-56 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
           />
-          <span className="text-[10px] font-black text-slate-700 uppercase tracking-widest mb-4">BPM</span>
+          <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4">BPM</span>
         </div>
 
         {/* Slider */}
@@ -326,7 +347,7 @@ const Metronome = () => {
             [&::-webkit-slider-thumb]:shadow-[0_0_15px_rgba(6,182,212,0.5)] [&::-webkit-slider-thumb]:cursor-pointer
             [&::-webkit-slider-thumb]:transition-shadow [&::-webkit-slider-thumb]:hover:shadow-[0_0_25px_rgba(6,182,212,0.7)]"
         />
-        <div className="flex justify-between text-[9px] font-black text-slate-700 uppercase tracking-widest mt-2">
+        <div className="flex justify-between text-[9px] font-black text-slate-500 uppercase tracking-widest mt-2">
           <span>{MIN_BPM}</span>
           <span>{MAX_BPM}</span>
         </div>
@@ -339,7 +360,7 @@ const Metronome = () => {
           other beats get a dimmer color. Subdivisions are smaller.
           ============================================================ */}
       <div className="bg-slate-900/40 backdrop-blur-md border border-slate-900/50 p-8 rounded-[2rem] shadow-2xl">
-        <div className="text-[9px] uppercase tracking-[0.4em] text-slate-600 font-black mb-6">BEAT GRID</div>
+        <div className="text-[9px] uppercase tracking-[0.4em] text-slate-500 font-black mb-6">BEAT GRID</div>
 
         <div className="flex items-center justify-center gap-2 flex-wrap">
           {Array.from({ length: totalSlots }).map((_, i) => {
@@ -378,7 +399,7 @@ const Metronome = () => {
             return (
               <div key={i} className={`${isMainBeat ? 'w-10' : 'w-6'} text-center`}>
                 {isMainBeat && (
-                  <span className="text-[10px] font-black text-slate-600">{beatIdx + 1}</span>
+                  <span className="text-[10px] font-black text-slate-500">{beatIdx + 1}</span>
                 )}
               </div>
             );
@@ -394,7 +415,7 @@ const Metronome = () => {
 
         {/* ---- Time Signature ---- */}
         <div className="bg-slate-900/40 backdrop-blur-md border border-slate-900/50 p-6 rounded-[2rem] shadow-2xl">
-          <div className="text-[9px] uppercase tracking-[0.4em] text-slate-600 font-black mb-4">TIME SIGNATURE</div>
+          <div className="text-[9px] uppercase tracking-[0.4em] text-slate-500 font-black mb-4">TIME SIGNATURE</div>
           <div className="flex gap-2">
             {TIME_SIGNATURES.map((ts) => (
               <button
@@ -407,7 +428,7 @@ const Metronome = () => {
                 className={`flex-1 py-3 rounded-xl text-sm font-black uppercase tracking-wider transition-all ${
                   timeSig === ts.value
                     ? 'bg-cyan-500 text-slate-950 shadow-[0_0_25px_rgba(6,182,212,0.4)]'
-                    : 'bg-slate-900/50 text-slate-600 hover:text-slate-300 border border-slate-900 hover:border-slate-800'
+                    : 'bg-slate-900/50 text-slate-500 hover:text-slate-300 border border-slate-900 hover:border-slate-800'
                 }`}
               >
                 {ts.label}
@@ -418,7 +439,7 @@ const Metronome = () => {
 
         {/* ---- Subdivisions ---- */}
         <div className="bg-slate-900/40 backdrop-blur-md border border-slate-900/50 p-6 rounded-[2rem] shadow-2xl">
-          <div className="text-[9px] uppercase tracking-[0.4em] text-slate-600 font-black mb-4">SUBDIVISION</div>
+          <div className="text-[9px] uppercase tracking-[0.4em] text-slate-500 font-black mb-4">SUBDIVISION</div>
           <div className="flex gap-2">
             {SUBDIVISIONS.map((sub) => (
               <button
@@ -430,7 +451,7 @@ const Metronome = () => {
                 className={`flex-1 py-3 rounded-xl text-sm font-black uppercase tracking-wider transition-all ${
                   subdivision === sub.value
                     ? 'bg-purple-600 text-white shadow-[0_0_25px_rgba(147,51,234,0.4)]'
-                    : 'bg-slate-900/50 text-slate-600 hover:text-slate-300 border border-slate-900 hover:border-slate-800'
+                    : 'bg-slate-900/50 text-slate-500 hover:text-slate-300 border border-slate-900 hover:border-slate-800'
                 }`}
               >
                 {sub.label}
@@ -473,7 +494,7 @@ const Metronome = () => {
       {/* ============================================================
           INFO FOOTER — shows computed timing info
           ============================================================ */}
-      <div className="flex justify-center gap-8 text-[9px] font-black text-slate-700 uppercase tracking-[0.3em]">
+      <div className="flex justify-center gap-8 text-[9px] font-black text-slate-500 uppercase tracking-[0.3em]">
         <span>INTERVAL: {Math.round(60000 / bpm)}MS</span>
         <span>BEATS: {beats}</span>
         <span>SUBS: {subdivision}x</span>

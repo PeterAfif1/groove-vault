@@ -1,19 +1,14 @@
 import { useEffect, useState } from 'react';
 import type { Rudiment, PracticeLog, Stats } from '../types/api';
+import { API_BASE } from '../config';
 
 interface TrendData {
   rudiment: Rudiment;
   logs: PracticeLog[];
 }
 
-// ------------------------------------------------------------
-// Sparkline
-// Renders an SVG polyline of BPM values oldest→newest.
-// Includes a dashed reference line at the target BPM so even
-// a single data point is meaningful in context.
-// ------------------------------------------------------------
 const Sparkline = ({ logs, targetBpm }: { logs: PracticeLog[]; targetBpm: number }) => {
-  const sorted = [...logs].reverse(); // API returns DESC; show oldest→newest left→right
+  const sorted = [...logs].reverse();
 
   if (sorted.length === 0) {
     return (
@@ -28,11 +23,10 @@ const Sparkline = ({ logs, targetBpm }: { logs: PracticeLog[]; targetBpm: number
   const PAD = 4;
 
   const bpms = sorted.map(l => l.current_bpm);
-  // Include target in scale so the chart is always relative to goal
   const allValues = [...bpms, targetBpm];
   const min = Math.min(...allValues);
   const max = Math.max(...allValues);
-  const range = max - min || 10; // prevent div/0 when all values are identical
+  const range = max - min || 10;
 
   const toX = (i: number, total: number) =>
     PAD + (total === 1 ? (W - PAD * 2) / 2 : (i / (total - 1)) * (W - PAD * 2));
@@ -45,14 +39,12 @@ const Sparkline = ({ logs, targetBpm }: { logs: PracticeLog[]; targetBpm: number
 
   return (
     <svg width="100%" height={H} viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none">
-      {/* Dashed target-BPM reference line */}
       <line
         x1={PAD} y1={targetY} x2={W - PAD} y2={targetY}
         stroke="rgba(6,182,212,0.2)"
         strokeWidth="1"
         strokeDasharray="4,3"
       />
-      {/* Trend line (only drawn when 2+ points) */}
       {bpms.length > 1 && (
         <polyline
           points={polylinePoints}
@@ -63,7 +55,6 @@ const Sparkline = ({ logs, targetBpm }: { logs: PracticeLog[]; targetBpm: number
           strokeLinejoin="round"
         />
       )}
-      {/* Data-point dots */}
       {pts.map((p, i) => (
         <circle key={i} cx={p.x} cy={p.y} r="2.5" fill="rgb(6,182,212)" />
       ))}
@@ -71,9 +62,6 @@ const Sparkline = ({ logs, targetBpm }: { logs: PracticeLog[]; targetBpm: number
   );
 };
 
-// ------------------------------------------------------------
-// StatCard — one of the three headline number cards
-// ------------------------------------------------------------
 const StatCard = ({ label, value, sub }: { label: string; value: string; sub: string }) => (
   <div className="bg-slate-900/40 backdrop-blur-md border border-slate-900/50 p-8 rounded-[2rem] shadow-2xl relative overflow-hidden">
     <div className="absolute -top-24 -right-24 w-48 h-48 bg-cyan-500/5 rounded-full blur-[80px]" />
@@ -83,9 +71,6 @@ const StatCard = ({ label, value, sub }: { label: string; value: string; sub: st
   </div>
 );
 
-// ------------------------------------------------------------
-// Analytics page
-// ------------------------------------------------------------
 const Analytics = () => {
   const [stats, setStats] = useState<Stats | null>(null);
   const [trends, setTrends] = useState<TrendData[]>([]);
@@ -95,8 +80,8 @@ const Analytics = () => {
     const load = async () => {
       try {
         const [statsRes, rudimentsRes] = await Promise.all([
-          fetch('/api/rudiments/stats'),
-          fetch('/api/rudiments'),
+          fetch(`${API_BASE}/api/rudiments/stats`),
+          fetch(`${API_BASE}/api/rudiments`),
         ]);
 
         if (statsRes.ok) setStats(await statsRes.json());
@@ -105,7 +90,7 @@ const Analytics = () => {
           const rudiments: Rudiment[] = await rudimentsRes.json();
           const logResults = await Promise.all(
             rudiments.map(r =>
-              fetch(`/api/rudiments/${r.id}/logs`).then(res => (res.ok ? res.json() : []))
+              fetch(`${API_BASE}/api/rudiments/${r.id}/logs`).then(res => (res.ok ? res.json() : []))
             )
           );
           setTrends(
@@ -130,8 +115,7 @@ const Analytics = () => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto space-y-16 p-8">
-      {/* Header */}
+    <div className="max-w-7xl mx-auto space-y-16">
       <div>
         <span className="bg-cyan-500/10 text-cyan-500 text-[9px] font-black uppercase tracking-[0.3em] px-4 py-1.5 rounded-full border border-cyan-500/20 shadow-[0_0_15px_rgba(6,182,212,0.1)]">
           PERFORMANCE DATA
@@ -141,26 +125,24 @@ const Analytics = () => {
         </h1>
       </div>
 
-      {/* Headline stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <StatCard
           label="TOTAL SESSIONS"
-          value={stats?.total_sessions ?? '0'}
+          value={String(stats?.total_sessions ?? '0')}
           sub="ALL TIME"
         />
         <StatCard
           label="AVG BPM"
-          value={stats?.average_bpm ?? '0'}
+          value={String(stats?.average_bpm ?? '0')}
           sub="ACROSS ALL LOGS"
         />
         <StatCard
           label="ACTIVE RUDIMENTS"
-          value={stats?.active_rudiments ?? '0'}
+          value={String(stats?.active_rudiments ?? '0')}
           sub="WITH LOGGED SESSIONS"
         />
       </div>
 
-      {/* BPM trend cards */}
       {trends.length > 0 ? (
         <div className="space-y-6">
           <div className="text-[9px] uppercase tracking-[0.4em] font-black text-slate-600">
@@ -177,7 +159,6 @@ const Analytics = () => {
                   key={rudiment.id}
                   className="bg-slate-900/40 backdrop-blur-md border border-slate-900/50 p-6 rounded-[2rem] shadow-2xl"
                 >
-                  {/* Name + category */}
                   <div className="mb-4">
                     <span className="text-[9px] uppercase tracking-[0.4em] font-black text-slate-600 block mb-1">
                       {rudiment.category || 'EXERCISE'}
@@ -187,12 +168,10 @@ const Analytics = () => {
                     </h3>
                   </div>
 
-                  {/* Sparkline */}
                   <div className="mb-5">
                     <Sparkline logs={logs} targetBpm={rudiment.target_bpm} />
                   </div>
 
-                  {/* Latest BPM vs goal */}
                   <div className="flex justify-between items-end">
                     <div>
                       <div className="text-[9px] uppercase tracking-[0.3em] font-black text-slate-600 mb-1">
@@ -214,7 +193,6 @@ const Analytics = () => {
                     </div>
                   </div>
 
-                  {/* Session count + mastery status */}
                   <div className="mt-4 flex justify-between text-[9px] uppercase font-black tracking-[0.2em]">
                     <span className="text-slate-700">
                       {logs.length} SESSION{logs.length !== 1 ? 'S' : ''}

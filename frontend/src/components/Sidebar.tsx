@@ -1,6 +1,11 @@
 import { NavLink } from 'react-router-dom';
 
-const Sidebar = () => {
+interface SidebarProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
   const menuItems = [
     { name: 'RUDIMENTS', path: '/' },
     { name: 'METRONOME', path: '/metronome' },
@@ -9,7 +14,12 @@ const Sidebar = () => {
   ];
 
   return (
-    <aside className="w-64 bg-slate-950/80 backdrop-blur-xl border-r border-slate-900 h-screen sticky top-0 flex flex-col p-6 overflow-hidden">
+    <aside className={`
+      w-64 bg-slate-950/80 backdrop-blur-xl border-r border-slate-900 h-screen flex flex-col p-6 overflow-hidden
+      fixed z-30 top-0 left-0 transition-transform duration-300
+      ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+      md:sticky md:translate-x-0
+    `}>
       <div className="flex items-center gap-2 mb-12">
         <div className="w-8 h-8 bg-cyan-500 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(6,182,212,0.4)]">
           <span className="font-black text-slate-950 text-xs italic">GV</span>
@@ -23,11 +33,12 @@ const Sidebar = () => {
             key={item.name}
             to={item.path}
             end={item.path === '/'}
+            onClick={onClose}
             className={({ isActive }) =>
               `w-full flex items-center gap-4 px-4 py-3 rounded-xl transition-all font-bold text-[10px] uppercase tracking-[0.2em] ${
                 isActive
                   ? 'bg-slate-900 text-cyan-500 shadow-xl'
-                  : 'text-slate-600 hover:text-slate-300 hover:bg-slate-900/50'
+                  : 'text-slate-500 hover:text-slate-300 hover:bg-slate-900/50'
               }`
             }
           >
@@ -37,7 +48,7 @@ const Sidebar = () => {
       </nav>
 
       <div className="mt-auto p-4 bg-slate-900/50 rounded-2xl border border-slate-800">
-        <div className="text-[9px] text-slate-600 uppercase font-black mb-1 tracking-widest">ENGINE STATUS</div>
+        <div className="text-[9px] text-slate-500 uppercase font-black mb-1 tracking-widest">ENGINE STATUS</div>
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-[0_0_10px_rgba(34,197,94,0.4)]"></div>
           <span className="text-[10px] text-slate-300 font-black uppercase tracking-widest">ONLINE</span>
