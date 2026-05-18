@@ -50,3 +50,28 @@ VALUES
   ('Ghost Note Groove',  'R l l R l l R l', 110, 'Technique', 'https://example.com/ghost-notes'),
   ('Double Bass Burner', 'R L R L K K',    200, 'Metal',     'https://example.com/double-bass')
 ON CONFLICT (name) DO NOTHING;
+
+-- =============================================================
+-- AI Layer — pgvector RAG support
+-- =============================================================
+CREATE EXTENSION IF NOT EXISTS vector;
+
+CREATE TABLE IF NOT EXISTS ai_documents (
+  id          SERIAL PRIMARY KEY,
+  filename    TEXT NOT NULL,
+  title       TEXT NOT NULL,
+  uploaded_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS ai_chunks (
+  id          SERIAL PRIMARY KEY,
+  document_id INTEGER NOT NULL REFERENCES ai_documents(id) ON DELETE CASCADE,
+  content     TEXT NOT NULL,
+  embedding   vector(1536),
+  chunk_index INTEGER NOT NULL,
+  created_at  TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS ai_chunks_embedding_idx
+  ON ai_chunks USING ivfflat (embedding vector_cosine_ops)
+  WITH (lists = 10);
