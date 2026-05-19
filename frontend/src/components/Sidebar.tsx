@@ -10,7 +10,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
     { name: 'RUDIMENTS', path: '/' },
     { name: 'METRONOME', path: '/metronome' },
     { name: 'ANALYTICS', path: '/analytics' },
-    { name: 'SOCIAL', path: '/social' },
+    { name: 'ASK AI', path: '/ask-ai' },
   ];
 
   return (

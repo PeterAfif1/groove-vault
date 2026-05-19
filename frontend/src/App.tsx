@@ -5,6 +5,7 @@ import Dashboard from './components/Dashboard'
 import AddRudimentForm from './components/AddRudimentForm'
 import Metronome from './components/Metronome'
 import Analytics from './components/Analytics'
+import AskAI from './components/AskAI'
 import './App.css'
 
 function App() {
@@ -86,14 +87,7 @@ function App() {
                 </div>
               }
             />
-            <Route
-              path="/social"
-              element={
-                <div className="p-8 flex items-center justify-center h-full">
-                  <p className="text-slate-500 font-black uppercase tracking-[0.4em] text-xs">SOCIAL COMING SOON</p>
-                </div>
-              }
-            />
+            <Route path="/ask-ai" element={<AskAI />} />
           </Routes>
         </main>
       </div>
