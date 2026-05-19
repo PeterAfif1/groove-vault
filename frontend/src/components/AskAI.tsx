@@ -93,6 +93,12 @@ const AskAI = () => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, loading]);
 
+  useEffect(() => {
+    if (input === '' && inputRef.current) {
+      inputRef.current.style.height = 'auto';
+    }
+  }, [input]);
+
   const send = async (question: string) => {
     const trimmed = question.trim();
     if (!trimmed || loading) return;
@@ -297,13 +303,17 @@ const AskAI = () => {
           <textarea
             ref={inputRef}
             value={input}
-            onChange={e => setInput(e.target.value)}
+            onChange={e => {
+              setInput(e.target.value);
+              e.target.style.height = 'auto';
+              e.target.style.height = `${Math.min(e.target.scrollHeight, 160)}px`;
+            }}
             onKeyDown={handleKeyDown}
             disabled={loading}
             rows={1}
             placeholder="Ask about rudiments, technique, grip, speed..."
             className="flex-1 bg-slate-900 border border-slate-800 focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20 rounded-2xl px-5 py-3.5 text-sm text-slate-100 placeholder-slate-600 resize-none outline-none transition-all font-medium leading-relaxed disabled:opacity-50"
-            style={{ maxHeight: '120px', overflowY: 'auto' }}
+            style={{ overflowY: 'auto' }}
           />
           <button
             onClick={() => void send(input)}
