@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import ReactMarkdown from 'react-markdown';
 import { API_BASE } from '../config';
 
 interface Message {
@@ -28,12 +29,65 @@ const TypingBubble = () => (
   </div>
 );
 
+type UploadStatus = 'idle' | 'uploading' | { chunks: number } | { error: string };
+
+// Session-scoped admin key — not persisted to localStorage
+let cachedAdminKey: string | null = null;
+
+function getAdminKey(): string | null {
+  if (!cachedAdminKey) {
+    cachedAdminKey = prompt('Enter admin key:');
+  }
+  return cachedAdminKey;
+}
+
 const AskAI = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  // Upload panel state
+  const [uploadOpen, setUploadOpen] = useState(false);
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [uploadTitle, setUploadTitle] = useState('');
+  const [uploadStatus, setUploadStatus] = useState<UploadStatus>('idle');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleUpload = async () => {
+    if (!uploadFile) return;
+    const adminKey = getAdminKey();
+    if (!adminKey) return;
+
+    setUploadStatus('uploading');
+    try {
+      const form = new FormData();
+      form.append('file', uploadFile);
+      form.append('title', uploadTitle || uploadFile.name.replace(/\.pdf$/i, ''));
+
+      const res = await fetch(`${API_BASE}/api/ai/upload`, {
+        method: 'POST',
+        headers: { 'x-admin-key': adminKey },
+        body: form,
+      });
+
+      if (res.ok) {
+        const data = await res.json() as { chunksCreated: number };
+        setUploadStatus({ chunks: data.chunksCreated });
+        setUploadFile(null);
+        setUploadTitle('');
+        if (fileInputRef.current) fileInputRef.current.value = '';
+      } else if (res.status === 401) {
+        cachedAdminKey = null;
+        setUploadStatus({ error: 'Wrong admin key' });
+      } else {
+        setUploadStatus({ error: 'Upload failed' });
+      }
+    } catch {
+      setUploadStatus({ error: 'Could not reach server' });
+    }
+  };
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -91,12 +145,73 @@ const AskAI = () => {
 
       {/* Header */}
       <div className="shrink-0 px-8 pt-8 pb-4 border-b border-slate-900">
-        <span className="bg-cyan-500/10 text-cyan-500 text-[9px] font-black uppercase tracking-[0.3em] px-4 py-1.5 rounded-full border border-cyan-500/20 shadow-[0_0_15px_rgba(6,182,212,0.1)]">
-          POWERED BY GPT-4o
-        </span>
-        <h1 className="text-4xl font-black text-slate-100 tracking-tighter uppercase italic leading-none mt-3">
-          ASK AI
-        </h1>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <span className="bg-cyan-500/10 text-cyan-500 text-[9px] font-black uppercase tracking-[0.3em] px-4 py-1.5 rounded-full border border-cyan-500/20 shadow-[0_0_15px_rgba(6,182,212,0.1)]">
+              POWERED BY GPT-4o
+            </span>
+            <h1 className="text-4xl font-black text-slate-100 tracking-tighter uppercase italic leading-none mt-3">
+              ASK AI
+            </h1>
+          </div>
+
+          {/* Admin upload toggle */}
+          <button
+            onClick={() => { setUploadOpen(o => !o); setUploadStatus('idle'); }}
+            className="mt-1 shrink-0 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-slate-600 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] text-slate-500 hover:text-slate-300 transition-all"
+          >
+            {uploadOpen ? 'CLOSE' : 'IMPORT PDF'}
+          </button>
+        </div>
+
+        {/* Upload panel */}
+        {uploadOpen && (
+          <div className="mt-4 p-4 bg-slate-900/60 border border-slate-800 rounded-xl flex flex-col gap-3">
+            <div className="flex gap-2 items-center">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".pdf"
+                onChange={e => {
+                  const f = e.target.files?.[0] ?? null;
+                  setUploadFile(f);
+                  if (f && !uploadTitle) setUploadTitle(f.name.replace(/\.pdf$/i, ''));
+                  setUploadStatus('idle');
+                }}
+                className="text-[10px] text-slate-400 file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border file:border-slate-700 file:bg-slate-800 file:text-slate-400 file:text-[9px] file:font-black file:uppercase file:cursor-pointer hover:file:bg-slate-700 transition-all"
+              />
+            </div>
+
+            <input
+              type="text"
+              value={uploadTitle}
+              onChange={e => setUploadTitle(e.target.value)}
+              placeholder="Document title (optional)"
+              className="bg-slate-950 border border-slate-800 focus:border-slate-600 rounded-lg px-3 py-2 text-xs text-slate-300 placeholder-slate-600 outline-none transition-all"
+            />
+
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => void handleUpload()}
+                disabled={!uploadFile || uploadStatus === 'uploading'}
+                className="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 disabled:opacity-40 border border-slate-700 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] text-slate-300 transition-all active:scale-95"
+              >
+                {uploadStatus === 'uploading' ? 'UPLOADING...' : 'UPLOAD'}
+              </button>
+
+              {typeof uploadStatus === 'object' && 'chunks' in uploadStatus && (
+                <span className="text-[10px] font-black text-green-400 uppercase tracking-widest">
+                  ✓ {uploadStatus.chunks} chunks created
+                </span>
+              )}
+              {typeof uploadStatus === 'object' && 'error' in uploadStatus && (
+                <span className="text-[10px] font-black text-red-400 uppercase tracking-widest">
+                  {uploadStatus.error}
+                </span>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Message area */}
@@ -143,13 +258,17 @@ const AskAI = () => {
 
             <div className={`max-w-[70%] flex flex-col gap-1.5 ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
               <div
-                className={`px-5 py-3.5 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap ${
+                className={`px-5 py-3.5 rounded-2xl text-sm leading-relaxed ${
                   msg.role === 'user'
-                    ? 'bg-cyan-500/20 border border-cyan-500/40 text-slate-100 rounded-br-sm font-medium'
+                    ? 'bg-cyan-500/20 border border-cyan-500/40 text-slate-100 rounded-br-sm font-medium whitespace-pre-wrap'
                     : 'bg-slate-800/50 border border-slate-700 text-slate-200 rounded-bl-sm'
                 }`}
               >
-                {msg.content}
+                {msg.role === 'user' ? msg.content : (
+                  <div className="prose prose-invert prose-sm max-w-none">
+                    <ReactMarkdown>{msg.content}</ReactMarkdown>
+                  </div>
+                )}
               </div>
 
               {msg.role === 'assistant' && msg.sources && msg.sources.length > 0 && (
