@@ -101,18 +101,29 @@ export const chat = async (req: Request, res: Response) => {
       [JSON.stringify(questionEmbedding)]
     );
 
-    const docIds = [...new Set(chunkResult.rows.map(r => r.document_id))];
-    const docResult = await pool.query<{ id: number; title: string }>(
-      `SELECT id, title FROM ai_documents WHERE id = ANY($1)`,
-      [docIds]
-    );
-    const titleMap = new Map(docResult.rows.map(r => [r.id, r.title]));
+    const hasChunks = chunkResult.rows.length > 0;
 
-    const contextBlocks = chunkResult.rows
-      .map((r, i) => `[${i + 1}] ${r.content}`)
-      .join('\n\n');
+    let userMessage: string;
+    let sources: string[];
 
-    const sources = [...new Set(chunkResult.rows.map(r => titleMap.get(r.document_id) ?? 'Unknown'))];
+    if (hasChunks) {
+      const docIds = [...new Set(chunkResult.rows.map(r => r.document_id))];
+      const docResult = await pool.query<{ id: number; title: string }>(
+        `SELECT id, title FROM ai_documents WHERE id = ANY($1)`,
+        [docIds]
+      );
+      const titleMap = new Map(docResult.rows.map(r => [r.id, r.title]));
+
+      const contextBlocks = chunkResult.rows
+        .map((r, i) => `[${i + 1}] ${r.content}`)
+        .join('\n\n');
+
+      sources = [...new Set(chunkResult.rows.map(r => titleMap.get(r.document_id) ?? 'Unknown'))];
+      userMessage = `Context:\n${contextBlocks}\n\nQuestion: ${question.trim()}`;
+    } else {
+      sources = [];
+      userMessage = question.trim();
+    }
 
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o',
@@ -120,11 +131,11 @@ export const chat = async (req: Request, res: Response) => {
         {
           role: 'system',
           content:
-            'You are an expert drum technique coach built into Groove Vault. Answer ONLY using the provided context from drum lesson materials. If the answer isn\'t in the context, say so clearly. Be specific, practical, and concise.',
+            'You are an expert drum technique coach built into Groove Vault. When context from drum lesson materials is provided, prioritize and ground your answer in that content and cite it. When no context is provided or the context doesn\'t cover the question, answer from your general drum knowledge — be specific, practical, and concise. Never refuse to answer a drum-related question.',
         },
         {
           role: 'user',
-          content: `Context:\n${contextBlocks}\n\nQuestion: ${question.trim()}`,
+          content: userMessage,
         },
       ],
     });
