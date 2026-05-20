@@ -80,13 +80,22 @@ export const uploadDocument = async (req: Request, res: Response) => {
  * POST /api/ai/chat
  * Embed question, retrieve top-5 chunks via cosine similarity, call GPT-4o.
  */
+type HistoryMessage = { role: 'user' | 'assistant'; content: string };
+
 export const chat = async (req: Request, res: Response) => {
-  const { question } = req.body as { question?: string };
+  const { question, history = [] } = req.body as {
+    question?: string;
+    history?: HistoryMessage[];
+  };
 
   if (!question || typeof question !== 'string' || question.trim() === '') {
     res.status(400).json({ error: 'Missing required field: question' });
     return;
   }
+
+  const safeHistory: HistoryMessage[] = Array.isArray(history)
+    ? history.slice(-6).filter(m => m.role && typeof m.content === 'string')
+    : [];
 
   try {
     const [questionEmbedding] = await embedTexts([question.trim()]);
@@ -131,6 +140,7 @@ export const chat = async (req: Request, res: Response) => {
           content:
             'You are an expert drum technique coach built into Groove Vault. When context from drum lesson materials is provided, prioritize and ground your answer in that content and cite it. When no context is provided or the context doesn\'t cover the question, answer from your general drum knowledge — be specific, practical, and concise. Never refuse to answer a drum-related question.',
         },
+        ...safeHistory,
         {
           role: 'user',
           content: userMessage,

@@ -95,6 +95,10 @@ const AskAI = () => {
     const trimmed = question.trim();
     if (!trimmed || loading) return;
 
+    const history = messages
+      .map(m => ({ role: m.role, content: m.content }))
+      .slice(-6);
+
     setMessages(prev => [...prev, { role: 'user', content: trimmed }]);
     setInput('');
     setLoading(true);
@@ -103,7 +107,7 @@ const AskAI = () => {
       const res = await fetch(`${API_BASE}/api/ai/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question: trimmed }),
+        body: JSON.stringify({ question: trimmed, history }),
       });
 
       if (res.ok) {
