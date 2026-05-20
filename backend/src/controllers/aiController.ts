@@ -36,8 +36,6 @@ async function embedTexts(texts: string[]): Promise<number[][]> {
  * Admin-only: parse a PDF, chunk it, embed, and store in ai_documents + ai_chunks.
  */
 export const uploadDocument = async (req: Request, res: Response) => {
-  if (!checkAdminKey(req, res)) return;
-
   if (!req.file) {
     res.status(400).json({ error: 'No file uploaded' });
     return;

@@ -31,16 +31,6 @@ const TypingBubble = () => (
 
 type UploadStatus = 'idle' | 'uploading' | { chunks: number } | { error: string };
 
-// Session-scoped admin key — not persisted to localStorage
-let cachedAdminKey: string | null = null;
-
-function getAdminKey(): string | null {
-  if (!cachedAdminKey) {
-    cachedAdminKey = prompt('Enter admin key:');
-  }
-  return cachedAdminKey;
-}
-
 const AskAI = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -53,12 +43,18 @@ const AskAI = () => {
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [uploadTitle, setUploadTitle] = useState('');
   const [uploadStatus, setUploadStatus] = useState<UploadStatus>('idle');
+  const [dragging, setDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const acceptFile = (f: File | null) => {
+    if (!f) return;
+    setUploadFile(f);
+    if (!uploadTitle) setUploadTitle(f.name.replace(/\.pdf$/i, ''));
+    setUploadStatus('idle');
+  };
 
   const handleUpload = async () => {
     if (!uploadFile) return;
-    const adminKey = getAdminKey();
-    if (!adminKey) return;
 
     setUploadStatus('uploading');
     try {
@@ -68,7 +64,6 @@ const AskAI = () => {
 
       const res = await fetch(`${API_BASE}/api/ai/upload`, {
         method: 'POST',
-        headers: { 'x-admin-key': adminKey },
         body: form,
       });
 
@@ -78,9 +73,6 @@ const AskAI = () => {
         setUploadFile(null);
         setUploadTitle('');
         if (fileInputRef.current) fileInputRef.current.value = '';
-      } else if (res.status === 401) {
-        cachedAdminKey = null;
-        setUploadStatus({ error: 'Wrong admin key' });
       } else {
         setUploadStatus({ error: 'Upload failed' });
       }
@@ -161,7 +153,6 @@ const AskAI = () => {
             </h1>
           </div>
 
-          {/* Admin upload toggle */}
           <button
             onClick={() => { setUploadOpen(o => !o); setUploadStatus('idle'); }}
             className="mt-1 shrink-0 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-slate-600 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] text-slate-500 hover:text-slate-300 transition-all"
@@ -173,20 +164,49 @@ const AskAI = () => {
         {/* Upload panel */}
         {uploadOpen && (
           <div className="mt-4 p-4 bg-slate-900/60 border border-slate-800 rounded-xl flex flex-col gap-3">
-            <div className="flex gap-2 items-center">
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".pdf"
-                onChange={e => {
-                  const f = e.target.files?.[0] ?? null;
-                  setUploadFile(f);
-                  if (f && !uploadTitle) setUploadTitle(f.name.replace(/\.pdf$/i, ''));
-                  setUploadStatus('idle');
-                }}
-                className="text-[10px] text-slate-400 file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border file:border-slate-700 file:bg-slate-800 file:text-slate-400 file:text-[9px] file:font-black file:uppercase file:cursor-pointer hover:file:bg-slate-700 transition-all"
-              />
+
+            {/* Drop zone */}
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              onDragOver={e => { e.preventDefault(); setDragging(true); }}
+              onDragLeave={() => setDragging(false)}
+              onDrop={e => {
+                e.preventDefault();
+                setDragging(false);
+                acceptFile(e.dataTransfer.files[0] ?? null);
+              }}
+              className={`cursor-pointer rounded-xl border-2 border-dashed px-5 py-6 flex flex-col items-center justify-center gap-2 transition-all
+                ${dragging
+                  ? 'border-cyan-500/60 bg-cyan-500/5'
+                  : uploadFile
+                    ? 'border-slate-600 bg-slate-800/40'
+                    : 'border-slate-700 bg-slate-800/20 hover:border-slate-600 hover:bg-slate-800/30'
+                }`}
+            >
+              {uploadFile ? (
+                <>
+                  <span className="text-[10px] font-black text-cyan-400 uppercase tracking-widest">PDF READY</span>
+                  <span className="text-xs text-slate-300 font-medium truncate max-w-full">{uploadFile.name}</span>
+                  <span className="text-[9px] text-slate-600 uppercase tracking-widest mt-1">Click to replace</span>
+                </>
+              ) : (
+                <>
+                  <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                    {dragging ? 'DROP IT' : 'DRAG & DROP or CLICK TO BROWSE'}
+                  </span>
+                  <span className="text-[9px] text-slate-700 uppercase tracking-widest">PDF files only</span>
+                </>
+              )}
             </div>
+
+            {/* Hidden file input */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".pdf"
+              className="hidden"
+              onChange={e => acceptFile(e.target.files?.[0] ?? null)}
+            />
 
             <input
               type="text"
