@@ -6,7 +6,6 @@ import AddRudimentForm from './components/AddRudimentForm'
 import Metronome from './components/Metronome'
 import Analytics from './components/Analytics'
 import AskAI from './components/AskAI'
-import './App.css'
 
 function AppShell() {
   const [refreshKey, setRefreshKey] = useState(0);

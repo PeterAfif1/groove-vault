@@ -16,6 +16,10 @@
     @apply bg-slate-950 text-slate-100 antialiased;
     font-family: var(--font-space);
   }
+
+  #root {
+    width: 100%;
+  }
 }
 
 /* Custom scrollbar */
